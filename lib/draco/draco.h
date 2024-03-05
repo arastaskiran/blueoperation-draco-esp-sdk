@@ -30,7 +30,7 @@ public:
     static void setBlueDeviceToken(const char *token);
     static void setBlueDeviceID(int device_id);
     /**
-     * @brief Add Http Route
+     * @brief Add Draco IO
      * @param io int
      * @param mode int
      * @param addr int

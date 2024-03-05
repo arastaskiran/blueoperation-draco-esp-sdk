@@ -81,7 +81,7 @@ Modüle IO noktası ekleme için `Draco::addIO` isimli methodu kullanmalısını
 
 ```cpp
     /**
-     * @brief Add Http Route
+     * @brief Add Draco IO
      * @param io int
      * @param mode int
      * @param addr int
@@ -129,7 +129,7 @@ ESP noktasının bluoperation üzerindeki karşılığı.
 
 ---
 
-Seri Port Üzerinden hata ayıklaması yapmanızı sağlar varsayılan olarak kapalıdır. Canlı kullanımda kapalı olarak tutunuz çünkü çalışma persormansını dramatik olarak etkiler.
+Seri Port Üzerinden hata ayıklaması yapmanızı sağlar varsayılan olarak kapalıdır. Canlı kullanımda kapalı olarak tutunuz çünkü çalışma performansını dramatik olarak etkiler.
 
 
 ```cpp
