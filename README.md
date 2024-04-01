@@ -55,7 +55,7 @@ void setup()
 {
 
   Draco::debugMode(true, 11520);
-  Draco::addIO(16, INPUT_PULLUP, 12, Draco::IoType::DIGITAL_INPUT);
+  Draco::addIO(16, INPUT_PULLUP, 12, DeviceType::IoType::DIGITAL_INPUT);
   Draco::setBlueDeviceID(54);
   Draco::setBlueAuthToken("Bearer SECRET_BEARER TOKEN");
   Draco::setBlueDeviceToken("SECRET_DEVICE_TOKEN"); 

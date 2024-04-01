@@ -8,27 +8,23 @@
  * @copyright Copyright (c) 2024 Argeloji Mühendislik
  *
  */
-
-#include "draco_item_list.h"
+#ifndef DRACO_H
+#define DRACO_H
 #include <draco_network.h>
+#include "draco_item_list.h"
+#include "draco_item.h"
+#include "device_type.h"
 
 class Draco : public DracoNetwork
 {
 public:
-    enum IoType
-    {
-        NONE = 0,
-        DIGITAL_INPUT = 1,
-        DIGITAL_OUTPUT = 2,
-        ANALOG_INPUT = 3,
-        ANALOG_OUTPUT = 4,
 
-    };
 
     static void setOrigin(const char *origin);
     static void setBlueAuthToken(const char *token);
     static void setBlueDeviceToken(const char *token);
     static void setBlueDeviceID(int device_id);
+
     /**
      * @brief Add Draco IO
      * @param io int
@@ -39,7 +35,7 @@ public:
      *
      * @return Void
      */
-    static void addIO(int io, int mode = 0x2, int addr = 0, unsigned int type = 0, bool inverted=false);
+    static void addIO(int io, int mode = 0x2, int addr = 0, unsigned int type = 0, bool inverted = false,bool feed_back=true);
     static void update();
     /**
      * @brief Set Debug Mode
@@ -65,6 +61,7 @@ public:
     static bool isDebugMode() { return _debug_mode; }
     static bool isSSL() { return use_ssl; }
     static void useSSL(bool status);
+   
 
 protected:
     static const char *_bop_auth_token;
@@ -75,8 +72,7 @@ protected:
     static bool use_proxy;
     static bool use_ssl;
     static uint16_t proxy_port;
-    static int _device_id;
-    static DracoItemList *io_list;
+    static int _device_id;   
     /**
      * @brief Controls hardware activity events
      *
@@ -95,3 +91,4 @@ private:
     static bool _debug_mode;
     static void checkIO();
 };
+#endif

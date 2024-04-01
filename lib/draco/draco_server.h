@@ -8,8 +8,10 @@
  * @copyright Copyright (c) 2023 Argeloji Mühendislik
  *
  */
-
+#ifndef DRACO_SERVER_H
+#define DRACO_SERVER_H
 #include <esp-wifi-server.h>
+
 
 class DracoServer : public ESPGenericWifiServer
 {
@@ -55,12 +57,15 @@ public:
 
     static unsigned long getCurrentStep();
 
+    // static void setIOList(DracoItemList *items);
+
 private:
     static unsigned int _current_http_event;
     static bool checkCommand(String &request);
-    static void openCurtain();
-    static void closeCurtain();
+    static void setDacoValue();
     static void loadRoutes();
     static bool isNumeric(const String &str);
     static unsigned long _currentStep;
+   
 };
+#endif

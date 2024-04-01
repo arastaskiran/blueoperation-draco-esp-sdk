@@ -10,7 +10,7 @@
  */
 
 #include <draco_network.h>
-#include <draco_server.h>
+#include "draco_server.h"
 
 bool DracoNetwork::use_wifi{false};
 

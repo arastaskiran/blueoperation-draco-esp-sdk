@@ -10,6 +10,7 @@
  */
 
 #include <draco_server.h>
+#include <draco_io_service.h>
 
 unsigned int DracoServer::_current_http_event{DracoServer::HTTPCommands::NOP};
 unsigned long DracoServer::_currentStep{0};
@@ -17,6 +18,10 @@ unsigned long DracoServer::_currentStep{0};
 void DracoServer::checkServer()
 {
     _current_http_event = HTTPCommands::NOP;
+    if (!ESPGenericWifiServer::checkWifi())
+    {
+        return;
+    }
     ESPGenericWifiServer::check();
 }
 
@@ -27,37 +32,45 @@ void DracoServer::startWifiServer(uint16_t port)
 }
 void DracoServer::loadRoutes()
 {
-    addRoute("/turn_on", HTTPMethod::HTTP_POST, openCurtain);
-    addRoute("/turn_off", HTTPMethod::HTTP_POST, closeCurtain);
+    addRoute("/set_value", HTTPMethod::HTTP_POST, setDacoValue);
 }
 
-void DracoServer::openCurtain()
+void DracoServer::setDacoValue()
 {
     if (!checkToken())
     {
         return;
     }
-    _currentStep = 0;
-    _current_http_event = HTTPCommands::CURTAIN_OPEN;
-    if (isNumeric(getArg("step_limit")))
+
+    if (!isNumeric(getArg("value")) || !isNumeric(getArg("point")))
     {
-        _currentStep = (unsigned long) getArg("step_limit").toInt();
-    }
-    server->send(200, "application/json", "{\"success\":true, \"message\":\"command processed\"}");
-}
-void DracoServer::closeCurtain()
-{
-    if (!checkToken())
-    {
+        server->send(422, "application/json", "{\"success\":false, \"message\":\"value and point must be integer\"}");
         return;
     }
-    _currentStep = 0;
-    _current_http_event = HTTPCommands::CURTAIN_CLOSE;
-    if (isNumeric(getArg("step_limit")))
+    int point = (int)getArg("point").toInt();
+    int value = (int)getArg("value").toInt();
+    bool found = false;
+
+    struct IONode *ptr;
+    ptr = DracoIoService::getIoList()->head;
+    while (ptr != NULL)
     {
-        _currentStep = (unsigned long) getArg("step_limit").toInt();
+        if (ptr->data->isAddrEQ(point))
+        {
+            ptr->data->setVal(value);
+            found = true;
+            break;
+        }
+
+        ptr = ptr->next;
     }
-    server->send(200, "application/json", "{\"success\":true, \"message\":\"command processed\"}");
+
+    if (!found)
+    {
+        server->send(404, "application/json", "{\"success\":false, \"message\":\"io object not found\"}");
+        return;
+    }
+    server->send(200, "application/json", "{\"success\":true, \"message\":\"io_value_changed\"}");
 }
 
 bool DracoServer::onHttpEvent(unsigned int event)

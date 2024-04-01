@@ -13,10 +13,11 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecureBearSSL.h>
-#include "draco.h"
 #include <ArduinoJson.h>
+#include "device_type.h"
+#include "draco.h"
 
-DracoItem::DracoItem(int io, int mode, int addr, unsigned int type, bool inverted)
+DracoItem::DracoItem(int io, int mode, int addr, unsigned int type, bool inverted, bool feed_back)
 {
     this->io = io;
     this->mode = mode;
@@ -24,12 +25,29 @@ DracoItem::DracoItem(int io, int mode, int addr, unsigned int type, bool inverte
     this->type = type;
     this->value = -1;
     this->is_inverted = inverted;
+    this->need_feedback_output = feed_back;
     this->setup();
 }
 
 void DracoItem::setup()
 {
-    pinMode(this->io, this->mode);
+    switch (type)
+    {
+    case DeviceType::IoType::DIGITAL_INPUT:
+        pinMode(this->io, this->mode);
+        break;
+    case DeviceType::IoType::DIGITAL_OUTPUT:
+        pinMode(this->io, OUTPUT);
+        digitalWrite(this->io, (this->is_inverted) ? HIGH : LOW);
+        break;
+    case DeviceType::IoType::ANALOG_OUTPUT:
+        pinMode(this->io, OUTPUT);
+        break;
+
+    default:
+
+        break;
+    }
 }
 
 void DracoItem::check()
@@ -39,56 +57,43 @@ void DracoItem::check()
         return;
     }
     this->value = digitalRead(this->io);
-    if (Draco::isDebugMode())
-    {
-        Serial.println("IO VALUE CHANGE:");
-    }
+
     send();
+}
+
+bool DracoItem::isAddrEQ(int addr)
+{
+    return this->addr == addr;
 }
 
 void DracoItem::send()
 {
-    if ((WiFi.status() != WL_CONNECTED))
+    if ((WiFi.status() != WL_CONNECTED) || !this->need_feedback_output)
     {
-        if (Draco::isDebugMode())
-        {
-            Serial.println("WIFI NOT READY");
-        }
+
         return;
     }
 
     HTTPClient https = getClient();
     https.setUserAgent("BLUEOPERATION-IOT-DEVICE");
-    if (Draco::isDebugMode())
-    {
-        Serial.print("[HTTP] POST...\n");
-    }
+
     buildHeader(https);
     int httpCode = https.POST(buildBody());
 
     if (httpCode <= 0)
     {
-        if (Draco::isDebugMode())
-        {
-            Serial.printf("[HTTP] POST... failed, error: %s\n", https.errorToString(httpCode).c_str());
-        }
+
         https.end();
         return;
     }
 
-    if (Draco::isDebugMode())
-    {
-        Serial.printf("[HTTP] POST... code: %d\n", httpCode);
-    }
+    // if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
+    // {
 
-    if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
-    {
-        if (Draco::isDebugMode())
-        {
-            String payload = https.getString();
-            Serial.println(payload);
-        }
-    }
+    //         String payload = https.getString();
+    //         Serial.println(payload);
+
+    // }
 
     https.end();
 }
@@ -117,6 +122,41 @@ void DracoItem::buildHeader(HTTPClient &http)
     }
 
     http.addHeader("Authorization", Draco::getAuthToken());
+}
+
+void DracoItem::setVal(int val)
+{
+    if (type == DeviceType::IoType::DIGITAL_INPUT || type == DeviceType::IoType::ANALOG_INPUT)
+    {
+        return;
+    }
+    if (type == DeviceType::IoType::DIGITAL_OUTPUT)
+    {
+        setDigitalOut(val);
+        return;
+    }
+    setAnalogOut(val);
+}
+
+void DracoItem::setDigitalOut(int val)
+{
+    value = val;
+    if (is_inverted)
+    {
+
+        digitalWrite(this->io, (val == 1) ? LOW : HIGH);
+        this->send();
+        return;
+    }
+    digitalWrite(this->io, (val == 1) ? HIGH : LOW);
+    this->send();
+    return;
+}
+void DracoItem::setAnalogOut(int val)
+{
+    value = val;
+    analogWrite(this->io, val);
+    this->send();
 }
 
 String DracoItem::getEP()
@@ -181,9 +221,13 @@ HTTPClient DracoItem::getClient()
 
 int DracoItem::getValue()
 {
-    if (type == Draco::IoType::DIGITAL_INPUT)
+    if (type == DeviceType::IoType::DIGITAL_INPUT)
     {
         return getDIValue();
+    }
+    if (type == DeviceType::IoType::ANALOG_INPUT)
+    {
+        return analogRead(this->io);
     }
 
     return value;
@@ -214,16 +258,16 @@ String DracoItem::getHardware()
     String v = "";
     switch (type)
     {
-    case Draco::IoType::DIGITAL_INPUT:
+    case DeviceType::IoType::DIGITAL_INPUT:
         v = "Mod8DI";
         break;
-    case Draco::IoType::DIGITAL_OUTPUT:
+    case DeviceType::IoType::DIGITAL_OUTPUT:
         v = "Mod8KO";
         break;
-    case Draco::IoType::ANALOG_INPUT:
+    case DeviceType::IoType::ANALOG_INPUT:
         v = "Mod8AI";
         break;
-    case Draco::IoType::ANALOG_OUTPUT:
+    case DeviceType::IoType::ANALOG_OUTPUT:
         v = "Mod2AO";
         break;
 
@@ -238,16 +282,16 @@ String DracoItem::getType()
     String v = "";
     switch (type)
     {
-    case Draco::IoType::DIGITAL_INPUT:
+    case DeviceType::IoType::DIGITAL_INPUT:
         v = "digitalinputs";
         break;
-    case Draco::IoType::DIGITAL_OUTPUT:
+    case DeviceType::IoType::DIGITAL_OUTPUT:
         v = "digitaloutputs";
         break;
-    case Draco::IoType::ANALOG_INPUT:
+    case DeviceType::IoType::ANALOG_INPUT:
         v = "analoginputs";
         break;
-    case Draco::IoType::ANALOG_OUTPUT:
+    case DeviceType::IoType::ANALOG_OUTPUT:
         v = "analogoutputs";
         break;
 

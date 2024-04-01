@@ -8,7 +8,8 @@
  * @copyright Copyright (c) 2023 Argeloji Mühendislik
  *
  */
-
+#ifndef DRACO_WIFI_SERVER_H
+#define DRACO_WIFI_SERVER_H
 #include <WiFiServer.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -102,6 +103,8 @@ public:
      */
     static void addRoute(const Uri &uri, HTTPMethod method, std::function<void(void)> fn);
 
+    static bool checkWifi();
+
 protected:
     static ESP8266WebServer *server;
     static bool checkToken();
@@ -120,4 +123,7 @@ private:
     static char *_token;
     static char *_psk;
     static IPAddress toIP(const char *ip);
+
+    
 };
+#endif

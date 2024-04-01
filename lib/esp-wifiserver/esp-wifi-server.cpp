@@ -84,7 +84,6 @@ void ESPGenericWifiServer::connect(uint16_t port)
         Serial.print("Connecting to ");
         Serial.println(_ssid);
     }
-
     // Configures static IP address
     if (!WiFi.config(_ip, _gateway, _netmask, _dns1, _dns2))
     {
@@ -115,6 +114,14 @@ void ESPGenericWifiServer::connect(uint16_t port)
         Serial.print(WiFi.localIP());
         Serial.println("/");
     }
+    WiFi.setAutoReconnect(true);
+    WiFi.persistent(true);
+}
+
+bool ESPGenericWifiServer::checkWifi()
+{
+
+    return (WiFi.status() == WL_CONNECTED);
 }
 
 void ESPGenericWifiServer::addRoute(const Uri &uri, HTTPMethod method, std::function<void(void)> fn)

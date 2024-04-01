@@ -8,7 +8,8 @@
  * @copyright Copyright (c) 2023 Argeloji Mühendislik
  *
  */
-
+#ifndef DRACO_NETWORK_H
+#define DRACO_NETWORK_H
 class DracoNetwork
 {
 public:
@@ -20,3 +21,4 @@ public:
 protected:
     static bool use_wifi;
 };
+#endif

@@ -9,13 +9,12 @@
  *
  */
 #include "draco.h"
-#include "draco_item_list.h"
-#include "draco_item.h"
+
 #include <string.h>
 #include <Arduino.h>
 #include <draco_server.h>
+#include <draco_io_service.h>
 
-DracoItemList *Draco::io_list{new DracoItemList()};
 const char *Draco::_bop_origin{nullptr};
 const char *Draco::_bop_auth_token{nullptr};
 const char *Draco::_bop_device_token{nullptr};
@@ -74,9 +73,9 @@ void Draco::setBlueDeviceID(int device_id)
     _device_id = device_id;
 }
 
-void Draco::addIO(int io, int mode, int addr, unsigned int type, bool inverted)
+void Draco::addIO(int io, int mode, int addr, unsigned int type, bool inverted, bool feed_back)
 {
-    io_list->insert(new DracoItem(io, mode, addr, type, inverted));
+    DracoIoService::addIO(io, mode, addr, type, inverted, feed_back);
 }
 
 void Draco::setProxy(const char *origin, uint16_t port)
@@ -114,7 +113,7 @@ void Draco::update()
 void Draco::checkIO()
 {
     struct IONode *ptr;
-    ptr = io_list->head;
+    ptr = DracoIoService::getIoList()->head;
     while (ptr != NULL)
     {
         ptr->data->check();
